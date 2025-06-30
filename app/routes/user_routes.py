@@ -26,10 +26,6 @@ def create_user():
     db.session.commit()
     return user_schema.dump(user), 201
 
-@bp_user.get("")
-def list_users1():
-    return users_schema.dump(User.query.all())
-
 @bp_user.get("/<int:user_id>")
 def get_user(user_id):
     user = User.query.get_or_404(user_id)
@@ -84,7 +80,7 @@ def _login_required():
 def list_users():
     _login_required()
     users = User.query.all()
-    return users_schema.dump(users)
+    return [user.to_dict() for user in users]
 
 def verify_current_password(user, data: dict):
     """
@@ -93,3 +89,10 @@ def verify_current_password(user, data: dict):
     cur_pw = data.get("current_password")
     if not cur_pw or not user.check_password(cur_pw):
         abort(401, "Current password is incorrect")
+
+@bp_user.route('/auth-check', methods=['GET'])
+def auth_check():
+    from flask import session
+    if "user_id" in session:
+        return {"user_id": session["user_id"]}, 200
+    return {"error": "Unauthorized"}, 401

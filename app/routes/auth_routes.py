@@ -14,24 +14,27 @@ from flask_cors import cross_origin
 # ───────── LOGIN ─────────
 @bp_auth.post("/login")
 def login():
-    data = request.get_json()
-    user = User.query.filter_by(username=data.get("username")).first_or_404()
+    data = request.json or {}
+    username = data.get("username")
+    password = data.get("password")
 
-    # Handle missing password expiration date
-    if not user.password_expires:
-        user.password_expires = datetime.utcnow() + timedelta(days=30)
-        db.session.commit()
+    if not username or not password:
+        abort(400, "Missing credentials")
 
-    # Check if password expired
-    if user.password_expires < datetime.utcnow():
-        abort(403, description="Password expired")
+    user = User.query.filter_by(username=username).first()
+    if not user or not user.check_password(password):
+        abort(403, "Invalid credentials")
 
-    if not user.check_password(data.get("password")):
-        abort(401, description="Invalid credentials")
+    # 🔒 Check for password expiry
+    if user.password_expires and user.password_expires < datetime.utcnow():
+        abort(403, "PASSWORD_EXPIRED")
 
-    # ---------- Connexion OK
+    # Set session
     session["user_id"] = user.user_id
+    session["role"] = user.role.role_name if user.role else None
+
     return jsonify(user.to_dict())
+
 
 # ───────── LOGOUT ────────
 @bp_auth.post("/logout")
@@ -50,16 +53,18 @@ def who_am_i():
 
 @bp_auth.post("/send-code")
 def send_code():
-    # Simulate current user, or get from session/token
-    user_id = session.get("user_id")   # or replace with actual logged-in logic
-    if not user_id:
-        abort(401, "Not logged in")
+    data = request.get_json() or {}
+    name = data.get("name")
+    surname = data.get("surname")
 
-    user = User.query.get(user_id)
+    if not name or not surname:
+        abort(400, "Nom et prénom requis")
+
+    user = User.query.filter_by(name=name, surname=surname).first()
     if not user:
-        abort(404, "User not found")
+        abort(404, "Utilisateur introuvable")
 
-    code = f"{secrets.randbelow(1_000_000):06}"  # 6-digit code
+    code = f"{secrets.randbelow(1_000_000):06}"
     user.reset_code = code
     user.reset_expires = datetime.utcnow() + timedelta(minutes=15)
     db.session.commit()
@@ -69,7 +74,7 @@ def send_code():
         return "", 200
     except Exception as e:
         print("Email send failed:", e)
-        abort(500, "Could not send email")
+        abort(500, "Erreur lors de l’envoi de l’e-mail")
 
 @bp_auth.post("/reset-password")
 def reset_password():
@@ -104,3 +109,5 @@ def change_password():
     user.set_password(data["new_password"])
     db.session.commit()
     return "", 204
+
+
