@@ -1,0 +1,26 @@
+# Ignore Python stuff
+__pycache__/
+*.pyc
+*.pyo
+*.log
+
+# Ignore virtual environments
+venv/
+ENV/
+env/
+
+# Ignore dotenv and config files
+.env
+
+# VS Code settings
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+node_modules/
+dist/
+*.log
+.env
+*.tmp
+*.bak
