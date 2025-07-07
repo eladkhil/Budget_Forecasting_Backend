@@ -7,7 +7,7 @@ class Config:
 
 class DevConfig(Config):
     # ───── SQL Server (already fine) ─────
-    SERVER   = os.getenv("MSSQL_SERVER", "localhost\\SQLEXPRESS")
+    SERVER   = os.getenv("MSSQL_SERVER", "localhost")
     DATABASE = "Budget_forecasting"
     DRIVER   = "ODBC Driver 17 for SQL Server"
     USERNAME = os.getenv("MSSQL_USER", "")

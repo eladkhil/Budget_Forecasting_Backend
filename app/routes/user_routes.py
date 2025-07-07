@@ -25,6 +25,17 @@ def create_user():
     db.session.add(user)
     db.session.commit()
     return user_schema.dump(user), 201
+def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'email': self.email,
+            'department': self.department,
+            'position': self.position,
+            'is_active': self.is_active,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
 
 @bp_user.get("/<int:user_id>")
 def get_user(user_id):

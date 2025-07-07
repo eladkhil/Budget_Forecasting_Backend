@@ -1,6 +1,5 @@
 from app.extensions import db
 from werkzeug.security import generate_password_hash, check_password_hash
-
 class User(db.Model):
     __tablename__ = "User"
     user_id = db.Column(db.Integer, primary_key=True)
@@ -10,12 +9,17 @@ class User(db.Model):
     email     = db.Column(db.String(120), unique=True, nullable=False)
     phone     = db.Column(db.String(32))
     role_id = db.Column(db.Integer, db.ForeignKey("Role.role_id"))
-    role = db.relationship("Role", backref="users")
+    role = db.relationship("Role", backref="user")
+    licenses = db.relationship("License", back_populates="user")
+
+
 
     password_hash     = db.Column(db.String(256), nullable=False)
     password_expires  = db.Column(db.DateTime)
     reset_code = db.Column(db.String(6), nullable=True)
     reset_expires = db.Column(db.DateTime, nullable=True)
+
+
     # ---- NEW ----
     def to_dict(self, include_email=True):
         """Return a serialisable dict WITHOUT the password hash."""
