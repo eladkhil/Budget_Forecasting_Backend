@@ -40,7 +40,13 @@ def create_app(config_class=DevConfig):
     @app.after_request
     def after_request(response):
         from flask import request
-        print("➡️ Origin received:", request.headers.get("Origin"))
+        origin = request.headers.get("Origin")
+        print("➡️ Origin received:", origin)
+        if origin in ["http://localhost:4200", "http://127.0.0.1:4200"]:
+            response.headers.add("Access-Control-Allow-Origin", origin)
+            response.headers.add("Access-Control-Allow-Credentials", "true")
+            response.headers.add("Access-Control-Allow-Headers", "Content-Type")
+            response.headers.add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
         return response
 
     # ── register blueprints ─────────────────────
