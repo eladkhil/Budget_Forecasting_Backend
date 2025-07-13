@@ -1,4 +1,9 @@
 from .Role import Role
 from .User import User
-from .License import License
-from .Software import Software
+from .Licence import Licence
+from .Famille import Famille
+from .Type import Type
+from .Equipement import Equipement
+from .Fournisseur import Fournisseur
+from .BonLivraison import BonLivraison
+

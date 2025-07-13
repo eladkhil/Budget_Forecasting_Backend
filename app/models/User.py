@@ -10,7 +10,6 @@ class User(db.Model):
     phone     = db.Column(db.String(32))
     role_id = db.Column(db.Integer, db.ForeignKey("Role.role_id"))
     role = db.relationship("Role", backref="user")
-    licenses = db.relationship("License", back_populates="user")
 
 
 
