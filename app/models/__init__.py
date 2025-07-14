@@ -4,4 +4,3 @@ from .Direction import Direction
 from .Rubrique import Rubrique
 from .Groupement import Groupement
 from .Budget import Budget
-from .Consommation import Consommation

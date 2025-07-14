@@ -5,4 +5,6 @@ class GroupementSchema(Schema):
     name = fields.Str(required=True)
     rubrique_id = fields.Int(required=True)
     budget_alloue = fields.Float(allow_none=True)
+    budget_consomme = fields.Float(allow_none=True)
+    ecart = fields.Float(allow_none=True)
     budget_id = fields.Int(allow_none=True)

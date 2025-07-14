@@ -1,9 +1,9 @@
 # app/__init__.py  (or wherever create_app lives)
 from flask import Flask
-from flask_cors import CORS               # one import is enough
+from flask_cors import CORS              
 from flask_session import Session
 from app.config import DevConfig
-from app.extensions import db, ma, mail   # ← no "cors" here
+from app.extensions import db, ma, mail  
 from app.routes import blueprints
 
 def create_app(config_class=DevConfig):
