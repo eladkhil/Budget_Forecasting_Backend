@@ -7,4 +7,4 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
         exclude = ("password_hash",)  # never expose hashes
 
-user_schema = UserSchema()
+#user_schema = UserSchema()

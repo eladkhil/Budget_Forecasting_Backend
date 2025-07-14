@@ -1,16 +1,14 @@
-# app/__init__.py  (or wherever create_app lives)
 from flask import Flask
-from flask_cors import CORS               # one import is enough
+from flask_cors import CORS              
 from flask_session import Session
 from app.config import DevConfig
-from app.extensions import db, ma, mail   # ← no "cors" here
+from app.extensions import db, ma, mail   
 from app.routes import blueprints
 
 def create_app(config_class=DevConfig):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
-    # ── session cookie settings ─────────────────────────
     app.config.update(
         SESSION_COOKIE_SAMESITE='Lax',
         SESSION_COOKIE_SECURE=False,
@@ -19,15 +17,12 @@ def create_app(config_class=DevConfig):
         SESSION_TYPE='filesystem'
     )
 
-    # ── init extensions ─────────────────────────
     db.init_app(app)
     ma.init_app(app)
     mail.init_app(app)
 
-    # ── initialize server-side session after config ─────
     Session(app)
 
-     # ── CORS only once ─────────────────────────
     CORS(
         app,
         resources={r"/api/*": {"origins": ["http://localhost:4200", "http://127.0.0.1:4200"]}},
@@ -36,18 +31,16 @@ def create_app(config_class=DevConfig):
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     )
 
-    # 🔍 Log incoming Origin to debug CORS issues
     @app.after_request
     def after_request(response):
         from flask import request
         print("➡️ Origin received:", request.headers.get("Origin"))
         return response
 
-    # ── register blueprints ─────────────────────
     for bp in blueprints:
         app.register_blueprint(bp)
         
-    print("\n✅ Registered routes:")
+    print(" Registered routes:")
     for rule in app.url_map.iter_rules():
         print(rule)
 

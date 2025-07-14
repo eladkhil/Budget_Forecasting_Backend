@@ -36,11 +36,10 @@ def update_user(user_id):
     _login_required()
     user = User.query.get_or_404(user_id)
 
-    # ─── Allow only the user themself (or an admin) to edit ───
     requester_id   = session["user_id"]
-    requester_role = session.get("role")            # depends on how you store roles
+    requester_role = session.get("role")           
 
-    is_admin  = requester_role == "admin"           # adjust to your role logic
+    is_admin  = requester_role == "admin"     
     is_self   = requester_id == user_id
 
     if not (is_self or is_admin):
@@ -48,16 +47,13 @@ def update_user(user_id):
 
     data = request.json or {}
 
-    # ─── If the user edits their own account, verify password ───
     if is_self and not is_admin:
         verify_current_password(user, data)
 
-    # ─── Apply changes ───
-    for field in ("name", "surname", "email", "role_id"):
+    for field in ("name", "surname", "email","phone","role_id"):
         if field in data:
             setattr(user, field, data[field])
 
-    # Optional: allow password change in the same call
     if "password" in data:
         user.set_password(data["password"])
 

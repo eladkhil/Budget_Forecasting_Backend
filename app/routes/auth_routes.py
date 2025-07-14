@@ -1,5 +1,4 @@
 from flask import Blueprint, request, session, abort, jsonify
-from werkzeug.security import check_password_hash
 from app.extensions import db
 from app.models.User import User
 from app.schemas.user import UserSchema
@@ -9,9 +8,7 @@ from app.routes.utils import login_required
 from app.utils.email import send_reset_code
 from werkzeug.security import generate_password_hash
 bp_auth = Blueprint("auth", __name__, url_prefix="/api/auth")
-user_schema = UserSchema()   # to serialise the logged-in user
-from flask_cors import cross_origin
-# ───────── LOGIN ─────────
+user_schema = UserSchema() 
 @bp_auth.post("/login")
 def login():
     data = request.json or {}
@@ -25,24 +22,20 @@ def login():
     if not user or not user.check_password(password):
         abort(403, "Invalid credentials")
 
-    # 🔒 Check for password expiry
     if user.password_expires and user.password_expires < datetime.utcnow():
         abort(403, "PASSWORD_EXPIRED")
 
-    # Set session
     session["user_id"] = user.user_id
     session["role"] = user.role.role_name if user.role else None
 
     return jsonify(user.to_dict())
 
 
-# ───────── LOGOUT ────────
 @bp_auth.post("/logout")
 def logout():
     session.pop("user_id", None)
     return "", 204
 
-# ───────── HELPER ────────
 @bp_auth.get("/me")
 def who_am_i():
     uid = session.get("user_id")
@@ -101,11 +94,9 @@ def change_password():
     data = request.json or {}
     user = User.query.get(session["user_id"])
 
-    # verify current password
     if not user.check_password(data.get("current_password", "")):
         abort(401, "Current password incorrect")
 
-    # set new and auto-extend expiry (+1 month by model logic)
     user.set_password(data["new_password"])
     db.session.commit()
     return "", 204
