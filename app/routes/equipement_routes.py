@@ -4,7 +4,6 @@ from app.models import Equipement, Famille
 
 equipement_bp = Blueprint('equipement', __name__, url_prefix='/api/equipements')
 
-# CREATE
 @equipement_bp.route('/', methods=['POST'])
 def create_equipement():
     data = request.get_json()
@@ -23,19 +22,16 @@ def create_equipement():
     db.session.commit()
     return jsonify(equipement.to_dict()), 201
 
-# READ ALL
 @equipement_bp.route('/', methods=['GET'])
 def get_equipements():
     equipements = Equipement.query.all()
     return jsonify([e.to_dict() for e in equipements]), 200
 
-# READ ONE
 @equipement_bp.route('/<int:id>', methods=['GET'])
 def get_equipement(id):
     equipement = Equipement.query.get_or_404(id)
     return jsonify(equipement.to_dict()), 200
 
-# UPDATE
 @equipement_bp.route('/<int:id>', methods=['PUT'])
 def update_equipement(id):
     equipement = Equipement.query.get_or_404(id)
@@ -47,7 +43,6 @@ def update_equipement(id):
     db.session.commit()
     return jsonify(equipement.to_dict()), 200
 
-# DELETE
 @equipement_bp.route('/<int:id>', methods=['DELETE'])
 def delete_equipement(id):
     equipement = Equipement.query.get_or_404(id)

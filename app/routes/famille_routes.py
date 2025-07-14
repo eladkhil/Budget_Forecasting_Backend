@@ -4,7 +4,6 @@ from app.models import Famille
 
 famille_bp = Blueprint('famille', __name__, url_prefix='/api/familles')
 
-# CREATE
 @famille_bp.route('/', methods=['POST'])
 def create_famille():
     data = request.get_json()
@@ -18,19 +17,16 @@ def create_famille():
     db.session.commit()
     return jsonify(famille.to_dict()), 201
 
-# READ ALL
 @famille_bp.route('/', methods=['GET'])
 def get_familles():
     familles = Famille.query.all()
     return jsonify([f.to_dict() for f in familles]), 200
 
-# READ ONE
 @famille_bp.route('/<int:id>', methods=['GET'])
 def get_famille(id):
     famille = Famille.query.get_or_404(id)
     return jsonify(famille.to_dict()), 200
 
-# UPDATE
 @famille_bp.route('/<int:id>', methods=['PUT'])
 def update_famille(id):
     famille = Famille.query.get_or_404(id)
@@ -39,7 +35,7 @@ def update_famille(id):
     db.session.commit()
     return jsonify(famille.to_dict()), 200
 
-# DELETE
+
 @famille_bp.route('/<int:id>', methods=['DELETE'])
 def delete_famille(id):
     famille = Famille.query.get_or_404(id)

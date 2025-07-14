@@ -4,7 +4,7 @@ from app.models import Licence, Famille, Equipement
 
 licence_bp = Blueprint('licence', __name__, url_prefix='/api/licences')
 
-# CREATE
+
 @licence_bp.route('/', methods=['POST'])
 def create_licence():
     data = request.get_json()
@@ -17,8 +17,6 @@ def create_licence():
     id_famille = data.get('id_famille')
     id_type = data.get('id_type')
     id_equipements = data.get('id_equipements')
-
-    # Vérification des champs obligatoires
     if not designation or not cle_licence:
         return jsonify({'error': 'Designation et clé de licence sont requis.'}), 400
 
@@ -36,9 +34,18 @@ def create_licence():
 
     db.session.add(licence)
     db.session.commit()
-    return jsonify({'id': licence.id_licence}), 201
+    return jsonify({'id': licence.id_licence,
+                    'designation': licence.designation,
+                    'cle_licence': licence.cle_licence,
+                    'periode': licence.periode,
+                    'active': licence.active,
+                    'nombre_siestes': licence.nombre_siestes,
+                    'date_expiration': licence.date_expiration.isoformat() if licence.date_expiration else None,
+                    'id_famille': licence.id_famille,
+                    'id_type': licence.id_type,
+                    'id_equipements': licence.id_equipements
+                    }), 201
 
-# READ ALL
 @licence_bp.route('/', methods=['GET'])
 def get_licences():
     licences = Licence.query.all()
@@ -57,7 +64,6 @@ def get_licences():
         } for l in licences
     ])
 
-# READ ONE
 @licence_bp.route('/<int:id>', methods=['GET'])
 def get_licence(id):
     licence = Licence.query.get_or_404(id)
@@ -74,7 +80,7 @@ def get_licence(id):
         'id_equipements': licence.id_equipements
     })
 
-# UPDATE
+
 @licence_bp.route('/<int:id>', methods=['PUT'])
 def update_licence(id):
     licence = Licence.query.get_or_404(id)
@@ -93,7 +99,6 @@ def update_licence(id):
     db.session.commit()
     return jsonify({'message': 'Licence mise à jour'}), 200
 
-# DELETE
 @licence_bp.route('/<int:id>', methods=['DELETE'])
 def delete_licence(id):
     licence = Licence.query.get_or_404(id)

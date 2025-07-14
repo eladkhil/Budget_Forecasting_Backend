@@ -24,18 +24,20 @@ def create_type():
 @type_bp.route('/api/types/<int:id_type>', methods=['GET'])
 def get_type(id_type):
     type = Type.query.get_or_404(id_type)
-    return jsonify({'id_type': type.id_type, 'nom_type': type.nom_type}), 200
+    return jsonify({'id_type': type.id_type, 'nom_type': type.type}), 200
 @type_bp.route('/api/types/<int:id_type>', methods=['PUT'])
 def update_type(id_type):
     data = request.get_json()
-    type = data.get('type')
-    if not type:
-        return jsonify({'error': 'type is required'}), 400
+    new_type_name = data.get('type') 
+    
+    if not new_type_name:
+        return jsonify({'error': 'Le champ "type" est requis.'}), 400
 
-    type = Type.query.get_or_404(id_type)
-    type.type = type
+    type_obj = Type.query.get_or_404(id_type)
+    type_obj.type = new_type_name  
     db.session.commit()
-    return jsonify({'message': 'Type updated', 'id_type': type.id_type}), 200   
+    
+    return jsonify({'message': 'Type mis à jour', 'id_type': type_obj.id_type}), 200 
 @type_bp.route('/api/types/<int:id_type>', methods=['DELETE'])
 def delete_type(id_type):
     type = Type.query.get_or_404(id_type)

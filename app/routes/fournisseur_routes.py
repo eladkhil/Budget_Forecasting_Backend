@@ -4,7 +4,6 @@ from app.models import Fournisseur
 
 fournisseur_bp = Blueprint('fournisseur', __name__, url_prefix='/api/fournisseurs')
 
-# CREATE
 @fournisseur_bp.route('/', methods=['POST'])
 def create_fournisseur():
     data = request.get_json()
@@ -19,19 +18,16 @@ def create_fournisseur():
     db.session.commit()
     return jsonify(fournisseur.to_dict()), 201
 
-# READ ALL
 @fournisseur_bp.route('/', methods=['GET'])
 def get_fournisseurs():
     fournisseurs = Fournisseur.query.all()
     return jsonify([f.to_dict() for f in fournisseurs]), 200
 
-# READ ONE
 @fournisseur_bp.route('/<int:id>', methods=['GET'])
 def get_fournisseur(id):
     fournisseur = Fournisseur.query.get_or_404(id)
     return jsonify(fournisseur.to_dict()), 200
 
-# UPDATE
 @fournisseur_bp.route('/<int:id>', methods=['PUT'])
 def update_fournisseur(id):
     fournisseur = Fournisseur.query.get_or_404(id)
@@ -41,7 +37,6 @@ def update_fournisseur(id):
     db.session.commit()
     return jsonify(fournisseur.to_dict()), 200
 
-# DELETE
 @fournisseur_bp.route('/<int:id>', methods=['DELETE'])
 def delete_fournisseur(id):
     fournisseur = Fournisseur.query.get_or_404(id)

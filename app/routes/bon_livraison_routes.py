@@ -4,7 +4,6 @@ from app.models import BonLivraison, Fournisseur, Licence
 
 bon_bp = Blueprint('bon_livraison', __name__, url_prefix='/api/bons')
 
-# CREATE
 @bon_bp.route('/', methods=['POST'])
 def create_bon():
     data = request.get_json()
@@ -16,7 +15,6 @@ def create_bon():
     if not nom or not id_fournisseur or not id_licence:
         return jsonify({'error': 'nom, id_fournisseur et id_licence sont requis'}), 400
 
-    # Vérifications simples
     if not Fournisseur.query.get(id_fournisseur):
         return jsonify({'error': 'Fournisseur introuvable'}), 404
     if not Licence.query.get(id_licence):
@@ -32,7 +30,6 @@ def create_bon():
     db.session.commit()
     return jsonify({'id': bon.id_bon_livraison}), 201
 
-# READ ALL
 @bon_bp.route('/', methods=['GET'])
 def get_bons():
     bons = BonLivraison.query.all()
@@ -46,7 +43,6 @@ def get_bons():
         } for b in bons
     ]), 200
 
-# READ ONE
 @bon_bp.route('/<int:id>', methods=['GET'])
 def get_bon(id):
     bon = BonLivraison.query.get_or_404(id)
@@ -58,7 +54,6 @@ def get_bon(id):
         'id_licence': bon.id_licence
     })
 
-# UPDATE
 @bon_bp.route('/<int:id>', methods=['PUT'])
 def update_bon(id):
     bon = BonLivraison.query.get_or_404(id)
@@ -80,7 +75,6 @@ def update_bon(id):
     db.session.commit()
     return jsonify({'message': 'Bon de livraison mis à jour'}), 200
 
-# DELETE
 @bon_bp.route('/<int:id>', methods=['DELETE'])
 def delete_bon(id):
     bon = BonLivraison.query.get_or_404(id)
