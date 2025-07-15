@@ -93,6 +93,11 @@ def compute_ecart(budget: Budget):
 
 bp_report = Blueprint("bp_report", __name__, url_prefix="/api/report")
 
+@bp_report.route("/years", methods=["GET"])
+def get_years():
+    years = db.session.query(Budget.year).distinct().order_by(Budget.year).all()
+    return jsonify([y[0] for y in years])
+
 @bp_report.route("/year/<int:year>", methods=["GET"])
 def get_consolidated_report(year):
     sql = text("""
@@ -100,23 +105,23 @@ def get_consolidated_report(year):
             d.name AS direction,
             r.name AS rubrique,
             g.name AS groupement,
-            CONCAT(COALESCE(pd.type, ''), ': ', COALESCE(pd.montant, 0), ' DT') AS projet,
-            CONCAT(COALESCE(g.budget_consomme, 0), ' DT') AS consommation,
-            b.cloture,
-            CASE 
-                WHEN b.cloture = 1 THEN CONCAT((g.budget_alloue - COALESCE(g.budget_consomme, 0)), ' DT')
-                ELSE '—'
-            END AS ecart
+            g.budget_alloue,
+            SUM(CASE WHEN pd.type = 'Investissement' THEN pd.montant ELSE 0 END) AS investissement,
+            SUM(CASE WHEN pd.type = 'Fonctionnement' THEN pd.montant ELSE 0 END) AS fonctionnement,
+            SUM(CASE WHEN pd.type = 'Services' THEN pd.montant ELSE 0 END) AS services,
+            SUM(CASE WHEN pd.type = 'Formation' THEN pd.montant ELSE 0 END) AS formation,
+            g.budget_consomme,
+            g.ecart
         FROM Budgets b
         JOIN Groupements g ON g.budget_id = b.id
         JOIN Rubriques r ON r.id = g.rubrique_id
         JOIN Directions d ON d.id = r.direction_id
         LEFT JOIN ProjetDetails pd ON pd.groupement_id = g.id
         WHERE b.year = :year
+        GROUP BY d.name, r.name, g.name, g.budget_alloue, g.budget_consomme, g.ecart
         ORDER BY d.name, r.name, g.name
+
     """)
 
-
     results = db.session.execute(sql, {"year": year}).fetchall()
-    
     return jsonify([dict(row._mapping) for row in results])

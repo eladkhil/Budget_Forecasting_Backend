@@ -9,7 +9,6 @@ class Groupement(db.Model):
     budget_alloue = db.Column(db.Float, nullable=True)
     budget_consomme = db.Column(db.Float, nullable=True)
     budget_id = db.Column(db.Integer, db.ForeignKey('Budgets.id'), nullable=True)
-    ecart = db.Column(db.Float, nullable=True)
-
+    ecart = db.Column(db.Float, default=0)
     def __repr__(self):
         return f"<Groupement {self.name}>"

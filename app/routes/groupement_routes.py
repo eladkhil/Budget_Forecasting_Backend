@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from app.models.Groupement import Groupement
 from app.schemas.groupement import GroupementSchema
 from app.extensions import db
-
+import traceback
 # ✅ Consistent URL prefix
 bp_groupement = Blueprint("bp_groupement", __name__, url_prefix="/api/groupements")
 
@@ -22,39 +22,35 @@ def compute_budgets_for_groupement(groupement_id):
 # ✅ Create
 @bp_groupement.route("", methods=["POST"])
 def create_groupement():
-    data = request.get_json()
-    if not data or "name" not in data or "rubrique_id" not in data or "budget_id" not in data:
-        return jsonify({"error": "Missing required fields"}), 400
+    try:
+        data = request.get_json()
 
-    # Step 1: create the groupement without budget values
-    groupement = Groupement(
-        name=data["name"],
-        rubrique_id=data["rubrique_id"],
-        budget_id=data["budget_id"]
-    )
-    db.session.add(groupement)
-    db.session.commit()
+        # Cast numeric fields properly
+        budget_alloue = float(data.get("budget_alloue", 0))  # default to 0
+        budget_consomme = float(data.get("budget_consomme", 0))
 
-    # Step 2: Compute budget_alloue and budget_consomme from related ProjetDetails
-    budget_alloue, budget_consomme = compute_budgets_for_groupement(groupement.id)
-    groupement.budget_alloue = budget_alloue
-    groupement.budget_consomme = budget_consomme
+        ecart = budget_alloue - budget_consomme  # 💥 Automatically calculate
 
-    db.session.commit()
-    return jsonify(groupement_schema.dump(groupement)), 201
+        groupement = Groupement(
+            name=data["name"],
+            rubrique_id=int(data["rubrique_id"]),
+            budget_id=int(data["budget_id"]),
+            budget_alloue=budget_alloue,
+            budget_consomme=budget_consomme,
+            ecart=ecart
+        )
 
+        db.session.add(groupement)
+        db.session.commit()
 
-# ✅ Read all
-@bp_groupement.route("", methods=["GET"])
-def get_groupements():
-    groupements = Groupement.query.all()
-    return jsonify(groupements_schema.dump(groupements)), 200
+        return jsonify(groupement_schema.dump(groupement)), 201
 
-# ✅ Read one
-@bp_groupement.route("/<int:id>", methods=["GET"])
-def get_groupement(id):
-    groupement = Groupement.query.get_or_404(id)
-    return jsonify(groupement_schema.dump(groupement)), 200
+    except Exception as e:
+        print("[FLASK ERROR] Failed to create groupement")
+        print("[Exception]:", e)
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
 
 # ✅ Update
 @bp_groupement.route("/<int:id>", methods=["PUT"])
@@ -72,13 +68,27 @@ def update_groupement(id):
     if "budget_id" in data:
         groupement.budget_id = data["budget_id"]
 
-    # Recompute budgets based on current ProjetDetails
+    # Recompute budgets and ecart based on current ProjetDetails
     budget_alloue, budget_consomme = compute_budgets_for_groupement(groupement.id)
     groupement.budget_alloue = budget_alloue
     groupement.budget_consomme = budget_consomme
+    groupement.ecart = budget_alloue - budget_consomme  # 💥 Recalculate ecart
 
     db.session.commit()
     return jsonify(groupement_schema.dump(groupement)), 200
+
+# ✅ Read all
+@bp_groupement.route("", methods=["GET"])
+def get_groupements():
+    groupements = Groupement.query.all()
+    return jsonify(groupements_schema.dump(groupements)), 200
+
+# ✅ Read one
+@bp_groupement.route("/<int:id>", methods=["GET"])
+def get_groupement(id):
+    groupement = Groupement.query.get_or_404(id)
+    return jsonify(groupement_schema.dump(groupement)), 200
+
 
 # ✅ Delete
 @bp_groupement.route("/<int:id>", methods=["DELETE"])
