@@ -2,7 +2,6 @@ from flask import Blueprint, request, jsonify
 from app.extensions import db
 from app.models import Type
 
-
 type_bp = Blueprint('type_bp', __name__)
 
 @type_bp.route('/api/types', methods=['GET'])

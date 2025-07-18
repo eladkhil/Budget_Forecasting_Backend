@@ -6,4 +6,4 @@ from .Type import Type
 from .Equipement import Equipement
 from .Fournisseur import Fournisseur
 from .BonLivraison import BonLivraison
-
+from .association_tables import licence_equipement

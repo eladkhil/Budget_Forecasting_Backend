@@ -1,12 +1,5 @@
 from app.extensions import db
-from .User import User 
-from .Famille import Famille
-from .Type import Type
-from .Equipement import Equipement
-from .BonLivraison import BonLivraison
-from datetime import date
-
-
+from app.models.association_tables import licence_equipement  # Import instead of redefine
 
 class Licence(db.Model):
     __tablename__ = 'Licence'
@@ -19,11 +12,31 @@ class Licence(db.Model):
     nombre_siestes = db.Column(db.Integer)
     date_expiration = db.Column(db.Date)
 
-    # Relations
     id_famille = db.Column(db.Integer, db.ForeignKey('Famille.id_famille'))
     id_type = db.Column(db.Integer, db.ForeignKey('Type.id_type'))
-    id_equipements = db.Column(db.Integer, db.ForeignKey('Equipement.id_equipement'))
 
     bons_livraison = db.relationship('BonLivraison', backref='licence', lazy=True)
     famille = db.relationship('Famille', backref='licences', lazy=True)
     type_objet = db.relationship('Type', back_populates='licences')
+
+    # Many-to-many with Equipement
+    equipements = db.relationship(
+        'Equipement',
+        secondary='licence_equipement',
+        backref='_licences',
+        overlaps="_licences"
+    )
+
+    def to_dict(self):
+        return {
+            'id_licence': self.id_licence,
+            'designation': self.designation,
+            'cle_licence': self.cle_licence,
+            'periode': self.periode,
+            'active': self.active,
+            'nombre_siestes': self.nombre_siestes,
+            'date_expiration': self.date_expiration.isoformat() if self.date_expiration else None,
+            'id_famille': self.id_famille,
+            'id_type': self.id_type,
+            'equipements': [e.to_dict() for e in self.equipements]
+        }
