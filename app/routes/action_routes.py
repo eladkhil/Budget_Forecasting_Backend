@@ -3,29 +3,13 @@ from app.extensions import db,mail
 from app.models.User import User
 from app.models.Action import Action
 from flask_mail import Message
-import os
+from app.utils.email import notify_users_about_action
 from app.schemas.action import ActionSchema
 bp_action = Blueprint('actions', __name__, url_prefix='/api/actions')
 
 action_schema=ActionSchema()
 actions_schema=ActionSchema(many=True)
 
-def notify_users_about_action(action,users):
-    for user in users:
-        try:
-            msg = Message(
-            subject="Nouvelle Action Assignée",
-            recipients=[user.email],
-            sender=os.getenv("SMTP_USER"),
-            body=f"Bonjour {user.name},\n\nUne nouvelle action vous a été assignée :\n\n"
-            f"- Description : {action.description}\n"
-            f"- Statut : {action.statut}\n"
-            f"- Date limite : {action.date_limite}\n\nMerci de prendre connaissance de cette tâche.",
-            )
-            mail.send(msg)
-        except Exception as mail_err:
-            print(f"Erreur envoi mail à {user.email} :", mail_err)
-            print(f"Action users: {[user.user_id for user in action.users]}")
 @bp_action.route("",methods=["GET"])
 def list_actions():
     actions=db.session.query(Action).all()

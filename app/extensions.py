@@ -5,4 +5,4 @@ from flask_mail import Mail
 db  = SQLAlchemy()
 ma  = Marshmallow()
 cors = CORS()
-mail = Mail()
+mail=Mail()

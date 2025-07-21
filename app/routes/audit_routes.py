@@ -1,16 +1,35 @@
 from app.extensions import db
 from app.models.Audit import Audit
 from app.schemas.audit import AuditSchema
-from flask import Blueprint, jsonify,request,abort
-
+from flask import Blueprint,request,jsonify,abort
+from sqlalchemy import func,collate
 bp_audit = Blueprint("audits", __name__, url_prefix="/api/audits")
 audits_schema=AuditSchema(many=True)
 audit_schema  = AuditSchema()
 
 @bp_audit.route("",methods=["GET"])
 def list_audits():
-    audits=db.session.query(Audit).all()
-    return jsonify(audits_schema.dump(audits))
+    par_type=request.args.get("type")
+    par_annee=request.args.get("annee")
+    recherche=request.args.get("recherche")
+    page =int(request.args.get("page",1))
+    limite =int(request.args.get("limit",3))
+    offset = (page - 1) * limite
+    query=db.session.query(Audit)
+    query = query.order_by(Audit.date.desc())
+    if par_type:
+        query=query.filter(Audit.type==par_type)
+    if par_annee:
+        query=query.filter(func.extract('year',Audit.date)==int(par_annee))
+    if recherche and recherche.strip():
+        print("➡️ Recherche reçue :", recherche)
+        query=query.filter(collate(Audit.titre,'Latin1_General_CI_AI').like(f"%{recherche}%"))
+    totalAudit=query.count()
+    audits= query.offset(offset).limit(limite).all()
+    
+    return jsonify({
+        "totalAudit":totalAudit,
+        "audits":[audit.to_dict() for audit in audits]})
 
 @bp_audit.get("/<int:audit_id>")
 def get_audit(audit_id):

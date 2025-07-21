@@ -1,14 +1,36 @@
 import smtplib
 from email.message import EmailMessage
-from app.config import DevConfig
+from app.utils.load_email import load_email_config
 def send_reset_code(email, code):
+    config = load_email_config()
     msg = EmailMessage()
     msg['Subject'] = 'Your Password Reset Code'
-    msg['From'] = DevConfig.MAIL_DEFAULT_SENDER
+    msg['From'] = config['MAIL_DEFAULT_SENDER']
     msg['To'] = email
     msg.set_content(f"Your 6-digit reset code is: {code}\nValid for 15 minutes.")
 
-    with smtplib.SMTP(DevConfig.MAIL_SERVER, DevConfig.MAIL_PORT) as server:
+    with smtplib.SMTP( config['MAIL_SERVER'],  config['MAIL_PORT']) as server:
         server.starttls()
-        server.login(DevConfig.MAIL_USERNAME, DevConfig.MAIL_PASSWORD)
+        server.login( config['MAIL_USERNAME'],  config['MAIL_PASSWORD'])
         server.send_message(msg)
+
+def notify_users_about_action(action,users):
+    config=load_email_config()
+    print(config)
+    for user in users:
+        try:
+            msg = EmailMessage()
+            msg['Subject']="Nouvelle Action Assignée"
+            msg['To']=[user.email]
+            msg['From'] = config['MAIL_DEFAULT_SENDER']
+            msg.set_content(f"Bonjour {user.name},\n\nUne nouvelle action vous a été assignée :\n\n"
+            f"- Description : {action.description}\n"
+            f"- Statut : {action.statut}\n"
+            f"- Date limite : {action.date_limite}\n\nMerci de prendre connaissance de cette tâche.")
+            with smtplib.SMTP( config['MAIL_SERVER'],  config['MAIL_PORT']) as server:
+                server.starttls()
+                server.login( config['MAIL_USERNAME'],  config['MAIL_PASSWORD'])
+                server.send_message(msg)
+        except Exception as mail_err:
+            print(f"Erreur envoi mail à {user.email} :", mail_err)
+            print(f"Action users: {[user.user_id for user in action.users]}")

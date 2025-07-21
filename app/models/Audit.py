@@ -9,4 +9,13 @@ class Audit(db.Model):
     description=db.Column(db.String(255))
     user_id = db.Column(db.Integer, db.ForeignKey("User.user_id"))
     user = db.relationship("User", backref="audits")
-
+    def to_dict(self):
+        data = {
+            "audit_id": self.audit_id,
+            "titre": self.titre,
+            "type": self.type,
+            "date":  self.date.isoformat(),
+            "description": self.description,
+            "user_id": self.user_id
+        }
+        return data
