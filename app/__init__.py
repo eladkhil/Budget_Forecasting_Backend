@@ -1,10 +1,27 @@
-# app/__init__.py  (or wherever create_app lives)
-from flask import Flask
-from flask_cors import CORS              
+from flask import Flask, jsonify
+from flask_cors import CORS
 from flask_session import Session
 from app.config import DevConfig
-from app.extensions import db, ma, mail  
+from app.extensions import db, ma, mail
 from app.routes import blueprints
+from werkzeug.exceptions import HTTPException
+
+from sqlalchemy import inspect, text
+
+def ensure_password_expires_column(app):
+    """Ensures the 'password_expires' column exists in the SQL Server 'User' table."""
+    with app.app_context():
+        inspector = inspect(db.engine)
+        columns = [col["name"] for col in inspector.get_columns("User")]
+
+        if "password_expires" not in columns:
+            print("⚠️ 'password_expires' column missing. Creating it now...")
+            db.session.execute(text("ALTER TABLE [User] ADD password_expires DATETIME NULL"))
+            db.session.commit()
+            print("✅ 'password_expires' column created successfully.")
+        else:
+            print("✅ 'password_expires' column already exists.")
+
 
 def create_app(config_class=DevConfig):
     app = Flask(__name__)
@@ -23,11 +40,12 @@ def create_app(config_class=DevConfig):
     db.init_app(app)
     ma.init_app(app)
     mail.init_app(app)
-
-    # ── initialize server-side session after config ─────
     Session(app)
 
-     # ── CORS only once ─────────────────────────
+    # ✅ Ensure password_expires column exists
+    ensure_password_expires_column(app)
+
+    # ── CORS only once ─────────────────────────
     CORS(
         app,
         resources={r"/api/*": {"origins": ["http://localhost:4200", "http://127.0.0.1:4200"]}},
@@ -36,23 +54,21 @@ def create_app(config_class=DevConfig):
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     )
 
-    # 🔍 Log incoming Origin to debug CORS issues
-    @app.after_request
-    def after_request(response):
-        from flask import request
-        origin = request.headers.get("Origin")
-        print("➡️ Origin received:", origin)
-        if origin in ["http://localhost:4200", "http://127.0.0.1:4200"]:
-            response.headers.add("Access-Control-Allow-Origin", origin)
-            response.headers.add("Access-Control-Allow-Credentials", "true")
-            response.headers.add("Access-Control-Allow-Headers", "Content-Type")
-            response.headers.add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-        return response
-
     # ── register blueprints ─────────────────────
     for bp in blueprints:
         app.register_blueprint(bp)
-        
+
+    # ── global JSON error handler ───────────────
+    @app.errorhandler(HTTPException)
+    def handle_http_exception(e):
+        response = e.get_response()
+        response.data = jsonify({
+            "code": e.code,
+            "message": e.description
+        }).data
+        response.content_type = "application/json"
+        return response
+
     print("\n✅ Registered routes:")
     for rule in app.url_map.iter_rules():
         print(rule)

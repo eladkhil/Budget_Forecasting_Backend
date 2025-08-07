@@ -125,3 +125,30 @@ def get_consolidated_report(year):
 
     results = db.session.execute(sql, {"year": year}).fetchall()
     return jsonify([dict(row._mapping) for row in results])
+
+@bp_report.route("/all", methods=["GET"])
+def get_full_consolidated_report():
+    sql = text("""
+        SELECT 
+            b.year,
+            d.name AS direction,
+            r.name AS rubrique,
+            g.name AS groupement,
+            g.budget_alloue,
+            SUM(CASE WHEN pd.type = 'Investissement' THEN pd.montant ELSE 0 END) AS investissement,
+            SUM(CASE WHEN pd.type = 'Fonctionnement' THEN pd.montant ELSE 0 END) AS fonctionnement,
+            SUM(CASE WHEN pd.type = 'Services' THEN pd.montant ELSE 0 END) AS services,
+            SUM(CASE WHEN pd.type = 'Formation' THEN pd.montant ELSE 0 END) AS formation,
+            g.budget_consomme,
+            g.ecart
+        FROM Budgets b
+        JOIN Groupements g ON g.budget_id = b.id
+        JOIN Rubriques r ON r.id = g.rubrique_id
+        JOIN Directions d ON d.id = r.direction_id
+        LEFT JOIN ProjetDetails pd ON pd.groupement_id = g.id
+        GROUP BY b.year, d.name, r.name, g.name, g.budget_alloue, g.budget_consomme, g.ecart
+        ORDER BY b.year, d.name, r.name, g.name
+    """)
+    results = db.session.execute(sql).fetchall()
+    return jsonify([dict(row._mapping) for row in results])
+

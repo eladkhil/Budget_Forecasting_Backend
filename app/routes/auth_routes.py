@@ -13,6 +13,7 @@ user_schema = UserSchema()   # to serialise the logged-in user
 from flask_cors import cross_origin
 # ───────── LOGIN ─────────
 @bp_auth.post("/login")
+@cross_origin(supports_credentials=True)
 def login():
     data = request.json or {}
     username = data.get("username")
@@ -27,7 +28,10 @@ def login():
 
     # 🔒 Check for password expiry
     if user.password_expires and user.password_expires < datetime.utcnow():
-        abort(403, "PASSWORD_EXPIRED")
+        session["user_id"] = user.user_id
+        session["expired"] = True  # ➕ mark that session is expired
+        return jsonify({"message": "PASSWORD_EXPIRED"})
+
 
     # Set session
     session["user_id"] = user.user_id
@@ -92,22 +96,35 @@ def reset_password():
     user.password_hash = generate_password_hash(new_password)
     user.reset_code = None
     user.reset_expires = None
+    user.password_expires = datetime.utcnow() + timedelta(days=30)  # ✅ extend expiry
     db.session.commit()
     return "", 204
+
 
 @bp_auth.post("/change-password")
-@login_required
+@cross_origin(supports_credentials=True)
 def change_password():
+    user_id = session.get("user_id")
+    if not user_id:
+        abort(401, "Not logged in")
+
+    user = User.query.get(user_id)
+
     data = request.json or {}
-    user = User.query.get(session["user_id"])
+    current_password = data.get("current_password", "")
+    new_password = data.get("new_password")
 
-    # verify current password
-    if not user.check_password(data.get("current_password", "")):
-        abort(401, "Current password incorrect")
+    if not new_password:
+        abort(400, "New password is required")
 
-    # set new and auto-extend expiry (+1 month by model logic)
-    user.set_password(data["new_password"])
+    if not session.get("expired"):
+        # normal login → require current password
+        if not user.check_password(current_password):
+            abort(401, "Current password incorrect")
+
+    user.set_password(new_password)
+    user.password_expires = datetime.utcnow() + timedelta(days=30)
+    session.pop("expired", None)  # remove expired marker
     db.session.commit()
     return "", 204
-
 

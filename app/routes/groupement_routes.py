@@ -12,10 +12,37 @@ groupements_schema = GroupementSchema(many=True)
 
 def compute_budgets_for_groupement(groupement_id):
     from app.models.ProjetDetail import ProjetDetail
+    from app.models.AzureMonthlyTracking import AzureMonthlyTracking
+    from app.models.Groupement import Groupement
+    from app.models.Budget import Budget
 
-    details = ProjetDetail.query.filter_by(groupement_id=groupement_id).all()
-    budget_alloue = sum(d.montant for d in details)
-    budget_consomme = sum(d.montant_consomme or 0 for d in details)
+    groupement = Groupement.query.get(groupement_id)
+    if not groupement:
+        return 0, 0
+
+    budget = Budget.query.get(groupement.budget_id)
+    year = budget.year if budget else None
+
+    # Default values
+    budget_alloue = 0
+    budget_consomme = 0
+
+    if groupement.name.lower() == "Consommation Azure CSP":
+        # Only for Azure → consommation comes from AzureMonthlyTracking
+        azure_rows = AzureMonthlyTracking.query \
+            .filter_by(groupement_id=groupement_id) \
+            .filter(AzureMonthlyTracking.periode.like(f"%{year}%")) \
+            .all()
+
+        budget_consomme = sum(float(r.montant_ht) for r in azure_rows)
+        # If needed, you can also store budget_alloue separately or calculate based on some rule
+        budget_alloue = 0  # Optional: change if Azure has an alloue value
+
+    else:
+        # Other groupements → use ProjetDetail
+        details = ProjetDetail.query.filter_by(groupement_id=groupement_id).all()
+        budget_alloue = sum(d.montant for d in details)
+        budget_consomme = sum(d.montant_consomme or 0 for d in details)
 
     return budget_alloue, budget_consomme
 
