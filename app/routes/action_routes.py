@@ -1,9 +1,8 @@
 from flask import Blueprint, jsonify,request,abort
-from app.extensions import db,mail
+from app.extensions import db
 from app.models.User import User
 from app.models.Action import Action
-from flask_mail import Message
-from app.utils.email import notify_users_about_action
+from app.utils.email_utils import notify_users_about_action
 from app.schemas.action import ActionSchema
 bp_action = Blueprint('actions', __name__, url_prefix='/api/actions')
 

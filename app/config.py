@@ -1,6 +1,5 @@
 import os, secrets
 from urllib.parse import quote_plus
-from app.models.EmailConfig import EmailConfig
 
 class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -31,15 +30,5 @@ class DevConfig(Config):
         )
     SQLALCHEMY_DATABASE_URI = (f"mssql+pyodbc:///?odbc_connect={params}")
 
-    def load_email_config():
-        config = EmailConfig.query.first()
-        if config:
-            return {
-                "MAIL_SERVER": config.MAIL_SERVER,
-                "MAIL_PORT": config.MAIL_PORT,
-                "MAIL_USERNAME": config.MAIL_USERNAME,
-                "MAIL_PASSWORD": config.MAIL_PASSWORD,
-                "MAIL_USE_TLS": config.MAIL_USE_TLS,
-                "MAIL_DEFAULT_SENDER": config.MAIL_DEFAULT_SENDER
-            }
+
 

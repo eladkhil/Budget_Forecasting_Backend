@@ -5,6 +5,5 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = User
         load_instance = True
-        exclude = ("password_hash",)  # never expose hashes
+        exclude = ("password_hash",) 
 
-#user_schema = UserSchema()

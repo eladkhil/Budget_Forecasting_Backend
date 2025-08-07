@@ -7,6 +7,6 @@ class Action(db.Model):
     description=db.Column(db.String(255),nullable=False)
     statut=db.Column(db.String(20),nullable=False)
     date_limite = db.Column(db.Date, nullable=False)
-    vul_id = db.Column(db.Integer, db.ForeignKey("Vuln.vul_id"))
-    vuln = db.relationship("Vuln", backref="vulns")
+    vul_id = db.Column(db.Integer, db.ForeignKey("Vuln.vul_id" ,ondelete="CASCADE"), nullable=False)
+    vuln = db.relationship("Vuln", back_populates="actions")
     users = db.relationship('User',secondary=action_responsable,back_populates='actions')

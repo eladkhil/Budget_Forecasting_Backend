@@ -5,7 +5,7 @@ from app.schemas.user import UserSchema
 from datetime import datetime, timedelta
 import secrets
 from app.routes.utils import login_required
-from app.utils.email import send_reset_code
+from app.utils.email_utils import send_reset_code
 from werkzeug.security import generate_password_hash
 bp_auth = Blueprint("auth", __name__, url_prefix="/api/auth")
 user_schema = UserSchema() 

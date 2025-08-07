@@ -9,6 +9,9 @@ class Audit(db.Model):
     description=db.Column(db.String(255))
     user_id = db.Column(db.Integer, db.ForeignKey("User.user_id"))
     user = db.relationship("User", backref="audits")
+    vulns = db.relationship("Vuln", back_populates="audit", cascade="all, delete-orphan")
+    membres = db.relationship('AuditMembre', back_populates='audit',cascade='all, delete')
+
     def to_dict(self):
         data = {
             "audit_id": self.audit_id,

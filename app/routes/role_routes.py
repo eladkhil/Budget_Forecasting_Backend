@@ -1,4 +1,4 @@
-from flask import Blueprint, request, abort,jsonify
+from flask import Blueprint, request, abort
 from app.extensions import db
 from app.models.Role import Role
 from app.schemas.role import RoleSchema

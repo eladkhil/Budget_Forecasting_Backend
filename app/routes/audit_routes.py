@@ -1,5 +1,6 @@
 from app.extensions import db
 from app.models.Audit import Audit
+from app.models.AuditMembre import AuditMembre
 from app.schemas.audit import AuditSchema
 from flask import Blueprint,request,jsonify,abort
 from sqlalchemy import func,collate
@@ -22,7 +23,6 @@ def list_audits():
     if par_annee:
         query=query.filter(func.extract('year',Audit.date)==int(par_annee))
     if recherche and recherche.strip():
-        print("➡️ Recherche reçue :", recherche)
         query=query.filter(collate(Audit.titre,'Latin1_General_CI_AI').like(f"%{recherche}%"))
     totalAudit=query.count()
     audits= query.offset(offset).limit(limite).all()
@@ -51,6 +51,11 @@ def create_audit():
 
         )
         db.session.add(audit)
+        db.session.flush()
+        responsables=data.get("responsables",[])
+        for membre_id in responsables:
+            audit_membre=AuditMembre(audit_id=audit.audit_id,membre_id=membre_id)
+            db.session.add(audit_membre)
         db.session.commit()
         return jsonify({
             "status": "success",
@@ -68,6 +73,7 @@ def delete_audit(audit_id):
     db.session.delete(audit)
     db.session.commit()
     return "", 204
+
 @bp_audit.put("/<int:audit_id>")
 def update_audit(audit_id):
     audit = Audit.query.get_or_404(audit_id)
@@ -78,6 +84,11 @@ def update_audit(audit_id):
         audit.date = data.get('date', audit.date)
         audit.description = data.get('description', audit.description)
         audit.user_id = data.get('user_id', audit.user_id)
+        AuditMembre.query.filter_by(audit_id=audit_id).delete()
+        responsables=data.get("responsables",[])
+        for membre_id in responsables:
+            audit_membre=AuditMembre(audit_id=audit.audit_id,membre_id=membre_id)
+            db.session.add(audit_membre)
         db.session.commit()
         return jsonify({
             "status": "success",

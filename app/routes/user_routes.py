@@ -3,6 +3,9 @@ from app.extensions import db
 from app.models.User import User
 from app.schemas.user import UserSchema
 from datetime import datetime, timedelta
+from sqlalchemy import collate
+from flask_jwt_extended import jwt_required,get_jwt_identity
+
 bp_user = Blueprint("users", __name__, url_prefix="/api/users")
 user_schema  = UserSchema()
 users_schema = UserSchema(many=True)

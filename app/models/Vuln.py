@@ -17,5 +17,6 @@ class Vuln(db.Model):
     criticite = db.Column(db.String(50), nullable=False)
     priorite_mise_oeuvre = db.Column(db.String(20), nullable=False)
     complex_mise_oeuvre = db.Column(db.String(20), nullable=False)
-    audit_id = db.Column(db.Integer, db.ForeignKey('Audit.audit_id'), nullable=False) 
-    audit = db.relationship('Audit', backref='vulnerabilites')
+    audit_id = db.Column(db.Integer, db.ForeignKey('Audit.audit_id', ondelete="CASCADE"), nullable=False) 
+    audit = db.relationship('Audit',  back_populates="vulns")
+    actions = db.relationship("Action", back_populates="vuln", cascade="all, delete-orphan")
