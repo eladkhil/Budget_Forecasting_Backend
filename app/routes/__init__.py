@@ -9,4 +9,5 @@ from .annee_routes import bp_annee
 from .stats_routes import bp_stats
 from .societe_routes import bp_societe
 from .membre_routes import bp_membre
-blueprints = [bp_user, bp_role, bp_auth, bp_audit ,bp_vuln,bp_action ,bp_email_config,bp_annee,bp_stats,bp_societe,bp_membre]
+from .notif_routes import bp_notif
+blueprints = [bp_user, bp_role, bp_auth, bp_audit ,bp_vuln,bp_action ,bp_email_config,bp_annee,bp_stats,bp_societe,bp_membre,bp_notif]

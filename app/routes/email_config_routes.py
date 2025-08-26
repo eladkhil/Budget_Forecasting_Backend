@@ -25,25 +25,25 @@ def create_update_config():
             config = EmailConfig()
             ajout=True
         
-        if "MAIL_SERVER" in data and data["MAIL_SERVER"]:
-            config.MAIL_SERVER = data["MAIL_SERVER"]
+        if "mail_server" in data and data["mail_server"]:
+            config.mail_server = data["mail_server"]
 
-        if "MAIL_PORT" in data and data["MAIL_PORT"]:
-            config.MAIL_PORT = data["MAIL_PORT"]
+        if "mail_port" in data and data["mail_port"]:
+            config.mail_port = data["mail_port"]
 
-        if "MAIL_USERNAME" in data and data["MAIL_USERNAME"]:
-            config.MAIL_USERNAME = data["MAIL_USERNAME"]
+        if "mail_username" in data and data["mail_username"]:
+            config.mail_username = data["mail_username"]
 
-        if "MAIL_PASSWORD" in data and data["MAIL_PASSWORD"]:
-            config.MAIL_PASSWORD = data["MAIL_PASSWORD"]
+        if "mail_password" in data and data["mail_password"]:
+            config.mail_password = data["mail_password"]
 
-        if "MAIL_USE_TLS" in data:
-            mail_use_tls_val = data["MAIL_USE_TLS"]
+        if "mail_use_tls" in data:
+            mail_use_tls_val = data["mail_use_tls"]
         if isinstance(mail_use_tls_val, str):
             mail_use_tls_val = mail_use_tls_val.lower() in ('true', '1', 'yes')
-        config.MAIL_USE_TLS = bool(mail_use_tls_val)
-        if "MAIL_DEFAULT_SENDER" in data and data["MAIL_DEFAULT_SENDER"]:
-            config.MAIL_DEFAULT_SENDER = data["MAIL_DEFAULT_SENDER"]
+        config.mail_use_tls = bool(mail_use_tls_val)
+        if "mail_default_sender" in data and data["mail_default_sender"]:
+            config.mail_default_sender = data["mail_default_sender"]
         if (ajout):
             db.session.add(config)
         db.session.commit()

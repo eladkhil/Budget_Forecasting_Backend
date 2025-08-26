@@ -22,3 +22,82 @@ def niveau_criticite():
     group by criticite""")).mappings().all()
     data=[dict(row) for row in results]
     return jsonify(data)
+
+@bp_stats.route("/urgent",methods=["GET"])
+def criticite_urgent():
+    results=db.session.execute(text("""
+    SELECT v.vul_id,v.nom,v.criticite,v.audit_id,v.niveau_impact,v.proba,v.complex_mise_oeuvre
+    From (select vul_id,nom,audit_id,criticite,niveau_impact,proba,complex_mise_oeuvre,(
+        (case niveau_impact when 'Fort' then 3 when 'Moyen' then 2 else 1 end)+
+        (case proba  when 'plus' then 3 when 'Probable' then 2 else 1 end)-
+        (case complex_mise_oeuvre when 'Simple' then 1 when 'Moyenne' then 2 else 3 end)
+        )As score From Vuln)v 
+        JOIN Audit a ON a.audit_id = v.audit_id 
+        order by
+        case v.criticite when 'Fort' then 3 when 'Moyen' then 2 else 1 end desc,v.score desc;
+    """)).mappings().all()
+    data=[dict(row) for row in results]
+    return jsonify(data)
+@bp_stats.route("/evolaudit",methods=["GET"])
+def audit_evolution():
+    results=db.session.execute(text("""
+    SELECT count(audit_id) as TotalAudit,Month(date) as mois,year(date) as annee From Audit
+    where date >=DATEADD(MONTH, -1, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)) and
+    date < DATEADD(MONTH, 1, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))
+    Group by month(date),year(date);
+    """)).mappings().all()
+    data=[dict(row) for row in results]
+    for i in range(len(data)):
+        if i==0:
+            data[i]['evolution']=None
+        else:
+            pre=data[i-1]['TotalAudit']
+            curr=data[i]['TotalAudit']
+            data[i]['evolution']=round((curr-pre)*100/pre,2)
+
+    return jsonify(data)
+@bp_stats.route("/nbvuln",methods=["GET"])
+def Nbr_vuln():
+    results=db.session.execute(text("""
+    SELECT count(vul_id) as TotalVuln,Sum(Case when criticite='Fort' then 1 else 0 End)as critique From Vuln;
+    """)).mappings().all()
+    data=[dict(row) for row in results]
+    return jsonify(data)
+
+@bp_stats.route("/cours",methods=["GET"])
+def action_En_Cours():
+    results=db.session.execute(text("""
+    SELECT count(*) ActionCours, sum(case when DATEDIFF(Day,GETDATE(),date_limite) 
+    BETWEEN 1 and 2 then 1 else 0 end) as Proche from Action where statut='En cours'""")).mappings().all()
+    data=[dict(row) for row in results]
+    return jsonify(data)
+
+@bp_stats.route("/conforme",methods=["GET"])
+def taux_conformité():
+    results=db.session.execute(text("""
+        With trimestres As(
+        select 1 as trimestre
+        union all select 2
+        union all select 3
+        union all select 4),
+    Taux As(
+    SELECT DATEPART(QUARTER, date_limite) AS trimestre,
+    Cast( sum (case when statut ='validé' then 1 else 0 end)*100.0/count(*)
+        as decimal(5,2))as tauxConformite  From Action
+    where YEAR(date_limite) = YEAR(GETDATE())
+    GROUP BY DATEPART(QUARTER, date_limite))
+    SELECT t.trimestre,ISNULL(a.tauxConformite,0) As tauxConformite From trimestres t         
+    LEFT JOIN Taux a ON t.trimestre = a.trimestre;
+    """)).mappings().all()
+    data=[dict(row) for row in results]
+    for i in range(len(data)):
+        if i==0:
+            data[i]['evolution']=None
+        else:
+            pre=data[i-1]['tauxConformite']
+            curr=data[i]['tauxConformite']
+            if pre==0:
+                data[i]['evolution']=None
+            else:
+                data[i]['evolution']=round((curr-pre)*100/pre,2)
+    return jsonify(data)

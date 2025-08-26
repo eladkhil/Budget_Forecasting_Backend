@@ -29,9 +29,11 @@ def create_app(config_class=DevConfig):
             app,
             resources={r"/api/*": {"origins": ["http://localhost:4200", "http://127.0.0.1:4200"]}},
             supports_credentials=True,
-            allow_headers=["Content-Type"],
+            expose_headers="Authorization",
+            allow_headers=["Content-Type", "Authorization"],
             methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         )
+    socketio.init_app(app)
 
     @app.after_request
     def after_request(response):

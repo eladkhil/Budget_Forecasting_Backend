@@ -1,7 +1,6 @@
 from app.extensions import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from .ActionResponsable import action_responsable
-
 class User(db.Model):
     __tablename__ = "User"
     user_id = db.Column(db.Integer, primary_key=True)
@@ -17,6 +16,8 @@ class User(db.Model):
     reset_code = db.Column(db.String(6), nullable=True)
     reset_expires = db.Column(db.DateTime, nullable=True)
     actions = db.relationship('Action',secondary=action_responsable,back_populates='users')
+    notif_users = db.relationship("NotifUser", back_populates="users", cascade="all, delete-orphan")
+
     def to_dict(self, include_email=True):
         """Return a serialisable dict WITHOUT the password hash."""
         data = {

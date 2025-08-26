@@ -1,11 +1,9 @@
-from flask import Blueprint, request, session, abort
+from flask import Blueprint, request, session, abort,jsonify
 from app.extensions import db
 from app.models.User import User
 from app.schemas.user import UserSchema
 from datetime import datetime, timedelta
-from sqlalchemy import collate
-from flask_jwt_extended import jwt_required,get_jwt_identity
-
+from sqlalchemy import collate,or_
 bp_user = Blueprint("users", __name__, url_prefix="/api/users")
 user_schema  = UserSchema()
 users_schema = UserSchema(many=True)
@@ -78,8 +76,13 @@ def _login_required():
 @bp_user.get("")
 def list_users():
     _login_required()
-    users = User.query.all()
-    return [user.to_dict() for user in users]
+    recherche=request.args.get("recherche")
+    query = User.query
+    if recherche and recherche.strip():
+        query=query.filter(or_(collate(User.name,'Latin1_General_CI_AI').like(f"%{recherche}%"),
+                           collate(User.surname,'Latin1_General_CI_AI').like(f"%{recherche}%")))
+    users=query.all()
+    return jsonify([user.to_dict() for user in users])
 
 def verify_current_password(user, data: dict):
     """

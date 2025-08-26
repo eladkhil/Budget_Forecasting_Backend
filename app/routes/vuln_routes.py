@@ -15,8 +15,16 @@ def list_vulnerabilites():
 
 @bp_vuln.get("/audit/<int:audit_id>")
 def get_vulns_by_audit(audit_id):
-    vulns=Vuln.query.filter_by(audit_id=audit_id).all()
-    return jsonify(vulns_schema.dump(vulns))
+    page =int(request.args.get("page",1))
+    limite =int(request.args.get("limit",3))
+    offset = (page - 1) * limite
+    query=db.session.query(Vuln).filter_by(audit_id=audit_id).order_by(Vuln.vul_id)
+    totalVuln=query.count()
+    vulns= query.offset(offset).limit(limite).all()
+    return jsonify({
+        "totalVuln":totalVuln,
+        "vulns":[vuln.to_dict() for vuln in vulns]
+    })
 
 @bp_vuln.post("")
 def create_vuln():
@@ -30,7 +38,7 @@ def create_vuln():
             description=data.get("description"),
             preuve=data.get("preuve"),
             type=data.get("type"),
-            senario=data.get("senario"),
+            scenario=data.get("scenario"),
             processus=data.get("processus"),
             impacts=data.get("impacts"),
             niveau_impact=data.get("niveau_impact"),
@@ -74,7 +82,7 @@ def update_vuln(vul_id):
             vuln.description=data.get("description",vuln.description)
             vuln.preuve=data.get("preuve",vuln.preuve)
             vuln.type=data.get("type",vuln.type)
-            vuln.senario=data.get("senario",vuln.senario)
+            vuln.scenario=data.get("scenario",vuln.scenario)
             vuln.processus=data.get("processus",vuln.processus)
             vuln.impacts=data.get("impacts",vuln.impacts)
             vuln.niveau_impact=data.get("niveau_impact",vuln.niveau_impact)

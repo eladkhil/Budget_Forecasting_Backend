@@ -8,5 +8,7 @@ from .AuditMembre import AuditMembre
 from .Vuln import Vuln
 from .Action import Action
 from .ActionResponsable import action_responsable
+from .Notifications import Notifications
+from .NotifUser import NotifUser
 def configure_relationships():
     db.configure_mappers()
