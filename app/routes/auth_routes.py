@@ -20,7 +20,7 @@ def login():
 
     user = User.query.filter_by(username=username).first()
     if not user or not user.check_password(password):
-        abort(403, "Invalid credentials")
+        abort(401, "Invalid credentials")
 
     if user.password_expires and user.password_expires < datetime.utcnow():
         abort(403, "PASSWORD_EXPIRED")

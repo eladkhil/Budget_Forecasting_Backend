@@ -4,6 +4,8 @@ from app.models.User import User
 from app.models.Action import Action
 from app.utils.email_utils import notify_users_about_action
 from app.schemas.action import ActionSchema
+from datetime import datetime
+
 bp_action = Blueprint('actions', __name__, url_prefix='/api/actions')
 
 action_schema=ActionSchema()
@@ -11,6 +13,7 @@ actions_schema=ActionSchema(many=True)
 
 @bp_action.route("",methods=["GET"])
 def list_actions():
+    statut_actions()
     actions=db.session.query(Action).all()
     return jsonify(actions_schema.dump(actions))
 @bp_action.post("")
@@ -93,3 +96,14 @@ def update_action(action_id):
 def get_action(action_id):
     action = Action.query.get_or_404(action_id)
     return action_schema.dump(action)
+def statut_actions():
+    now=datetime.utcnow()
+    actions=Action.query.all()
+    change= False
+    for action in actions:
+        old_statut = action.statut
+        action.auto_change()
+        if action.statut != old_statut:
+            change=True
+    if change:
+        db.session.commit()

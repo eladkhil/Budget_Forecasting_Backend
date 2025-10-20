@@ -12,10 +12,12 @@ def create_app(config_class=DevConfig):
     app.config.from_object(config_class)
 
     app.config.update(
-        SESSION_COOKIE_SAMESITE='Lax',
+        SESSION_COOKIE_SAMESITE="Lax",
         SESSION_COOKIE_SECURE=False,
         SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_DOMAIN=None,
         SECRET_KEY='super-secret-key',
+        SESSION_COOKIE_PATH="/",
         SESSION_TYPE='filesystem',
 
     )
@@ -27,9 +29,9 @@ def create_app(config_class=DevConfig):
 
     CORS(
             app,
-            resources={r"/api/*": {"origins": ["http://localhost:4200", "http://127.0.0.1:4200"]}},
+            origins=["http://localhost:4200", "http://127.0.0.1:4200"],
             supports_credentials=True,
-            expose_headers="Authorization",
+            expose_headers=["Authorization"],
             allow_headers=["Content-Type", "Authorization"],
             methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         )

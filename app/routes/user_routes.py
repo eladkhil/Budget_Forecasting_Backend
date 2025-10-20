@@ -13,6 +13,9 @@ def create_user():
     data = request.json or {}
     missing = [k for k in ("username", "name", "surname", "email", "password","phone", "role_id") if k not in data]
     if missing: abort(400, f"Missing {', '.join(missing)}")
+    userexist=User.query.filter_by(email=data["email"]).first()
+    if(userexist and userexist.check_password(data["password"])):
+        abort(400,'utilisateur existe deja')
     user = User(
     username=data["username"],
     name=data["name"],
@@ -38,20 +41,18 @@ def update_user(user_id):
     user = User.query.get_or_404(user_id)
 
     requester_id   = session["user_id"]
-    requester_role = session.get("role")           
 
-    is_admin  = requester_role == "admin"     
     is_self   = requester_id == user_id
 
-    if not (is_self or is_admin):
+    if not (is_self):
         abort(403, "Forbidden")
 
     data = request.json or {}
 
-    if is_self and not is_admin:
+    if is_self:
         verify_current_password(user, data)
 
-    for field in ("name", "surname", "email","phone","role_id"):
+    for field in ("name", "surname", "email","phone"):
         if field in data:
             setattr(user, field, data[field])
 

@@ -1,6 +1,7 @@
 from app.extensions import db
 from sqlalchemy import text
 from flask import Blueprint,jsonify
+from app.routes.action_routes import statut_actions
 bp_stats = Blueprint("stats", __name__, url_prefix="/api/stats")
 
 @bp_stats.route("/type",methods=["GET"])
@@ -41,19 +42,30 @@ def criticite_urgent():
 @bp_stats.route("/evolaudit",methods=["GET"])
 def audit_evolution():
     results=db.session.execute(text("""
-    SELECT count(audit_id) as TotalAudit,Month(date) as mois,year(date) as annee From Audit
-    where date >=DATEADD(MONTH, -1, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)) and
-    date < DATEADD(MONTH, 1, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))
-    Group by month(date),year(date);
+    SELECT 
+        ISNULL( a.TotalAudit ,0) As TotalAudit ,
+        m.mois,
+        m.annee 
+        From (
+        SELECT MONTH(DATEADD(MONTH, -1, GETDATE())) AS mois, YEAR(DATEADD(MONTH, -1,GETDATE())) AS annee
+        UNION ALL
+            SELECT  MONTH(GETDATE()),YEAR(GETDATE()) ) m
+        Left JOIN (select month(date) as mois, year(date) as annee , count(audit_id) as TotalAudit from Audit 
+            Group by month(date),year(date) ) a
+        ON a.annee=m.annee AND m.mois=a.mois
+    order by m.mois, m.annee;
     """)).mappings().all()
     data=[dict(row) for row in results]
     for i in range(len(data)):
         if i==0:
-            data[i]['evolution']=None
+            data[i]['evolution']=0
         else:
             pre=data[i-1]['TotalAudit']
             curr=data[i]['TotalAudit']
-            data[i]['evolution']=round((curr-pre)*100/pre,2)
+            if pre==0:
+                data[i]['evolution']=100
+            else:
+                data[i]['evolution']=round((curr-pre)*100/pre,2)
 
     return jsonify(data)
 @bp_stats.route("/nbvuln",methods=["GET"])
@@ -66,6 +78,7 @@ def Nbr_vuln():
 
 @bp_stats.route("/cours",methods=["GET"])
 def action_En_Cours():
+    statut_actions()
     results=db.session.execute(text("""
     SELECT count(*) ActionCours, sum(case when DATEDIFF(Day,GETDATE(),date_limite) 
     BETWEEN 1 and 2 then 1 else 0 end) as Proche from Action where statut='En cours'""")).mappings().all()
@@ -82,7 +95,7 @@ def taux_conformité():
         union all select 4),
     Taux As(
     SELECT DATEPART(QUARTER, date_limite) AS trimestre,
-    Cast( sum (case when statut ='validé' then 1 else 0 end)*100.0/count(*)
+    Cast( sum (case when statut ='Validée' then 1 else 0 end)*100.0/count(*)
         as decimal(5,2))as tauxConformite  From Action
     where YEAR(date_limite) = YEAR(GETDATE())
     GROUP BY DATEPART(QUARTER, date_limite))
@@ -92,12 +105,12 @@ def taux_conformité():
     data=[dict(row) for row in results]
     for i in range(len(data)):
         if i==0:
-            data[i]['evolution']=None
+            data[i]['evolution']=0
         else:
             pre=data[i-1]['tauxConformite']
             curr=data[i]['tauxConformite']
             if pre==0:
-                data[i]['evolution']=None
+                data[i]['evolution']=100
             else:
                 data[i]['evolution']=round((curr-pre)*100/pre,2)
     return jsonify(data)
